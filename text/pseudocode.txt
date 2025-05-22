@@ -1,0 +1,51 @@
+# useful:
+
+Write a javascript page that has a text area and a extract button
+Create table 'output' (array or arrays) with columns 'date' 'title' 'status' 'length' 'description'
+When pressing extract, scan the input text for posts
+- The line 'Search posts' and all lines before should be ignored
+- The line 'See more posts' and all following lines should be ignored
+- The line 'Share' indicates the end of one post before it and the start of the next post after it. Use this to split all input into an array (posts) of arrays (lines). The line 'Share' should not be included.
+
+There are different types of posts, for example 'text' 'pod_internal' 'pod_external' 'video'.
+
+For each post, first the type needs to be determined, then it needs to be processed according to the type with the intent to fill a row in the 'output' table
+
+The 'video' type can be determined by the line 'Preview' followed by a line that ends in a m:ss time code
+
+Prepare type determination code placeholders for the other types.
+
+The 'video' type can be processed as follows:
+- If the line 'Locked' exists, set 'status' to 'Locked'
+- After the line 'Preview', the next line contains 'length', the next line contains 'title'
+- After the line 'New', the next line contiains a date. If it does not end in four integers, add ', ' and the current year. Set 'date' to the result.
+- After this there is an empty line, then the 'description' starts.
+- 'Join to unlock' indicates the end of the description.
+- Any other lines should be ignored.
+
+Prepare processing code placeholders for the other types.
+
+Write the result of processing to the table. If no type was determined, write the entire post (with newlines replaced by <br>) into the description field so I can use this to write new type definition code and processing code.
+
+Just the code with comments. No CSS.
+
+# ignore:
+
+- Ignore the line 'Locked' but set 'status' to 'Locked'
+-- An exception are posts where the few next lines are empty, then followed by the line "0:00", another empty line, then "Change progress" and then another time code. This indicates a podcast post. In such cases, the non-"0:00"-timecode is to be written to the length field. After a few empty lines the title begins.
+- Ignore the line "Preview" but set 'status' to 'Locked'. The next line is a 'length' timecode.
+-- The title can be 1 or 2 lines split by a newline and should be joined by a space and written to the title field
+- After the title, the line 'New' indicates that the line after it is the date, often without the year, it will often be in a format like 'May 5', it should be stored with ', {currentyear]' added, but some of them have 'Nov 15, 2024' format
+- If there is no line 'New' but a date in the format like 'Nov 15, 2024', that means the title is over as well and that the date should be written to the date field.
+- After the date, the description begins
+- Store newlines as <br> within descriptions if they span multiple lines
+- The line 'View post' might appear after the date. This text should not be included in the output
+- Ignore the line "Join to unlock" but set 'status' to 'Locked'. If this line exists, the description ends in the previous line.
+- A Line that only contains one of the following text is a tag line that only few posts have but it indicates the end of the description (if it hasn't already ended). This text should not be included in the output
+-- The Fog Campaign
+-- announcements
+-- video
+-- mountain campaign
+- lines that only contain one integer number are like and comment counters. This text should not be included in the output
+- Output the results in a table 
+Just the code with comments. No CSS.
