@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Extract Links</title>
+</head>
+<body>
+<nav><a href="https://github.com/qubodup/extract-free-patreon-post-text">readme</a> | <a href="https://qubodup.github.io/extract-free-patreon-post-text/links/">link extractor</a> | <a href="https://qubodup.github.io/extract-free-patreon-post-text/text/">post extractor</a></nav>
+
+<textarea id="input" rows="10" cols="60"></textarea><br>
+<button id="extractBtn">Extract</button>
+<br><br>
+<table id="outputTable" border="1"></table>
+
+<script>
+const links = [];
+
+document.getElementById('extractBtn').onclick = () => {
+  links.length = 0; // clear array
+  const text = document.getElementById('input').value;
+  // Regex to find href="/posts/...."
+  const regex = /href="(\/posts\/[^"]+)"/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const fullUrl = "https://www.patreon.com" + match[1];
+    if (!links.includes(fullUrl)) {
+      links.push(fullUrl);
+    }
+  }
+
+  const table = document.getElementById('outputTable');
+  table.innerHTML = '';
+  links.forEach(link => {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.textContent = link;
+    tr.appendChild(td);
+    table.appendChild(tr);
+  });
+};
+
+// Select table content on click for easy copy/paste
+document.getElementById('outputTable').onclick = () => {
+  const range = document.createRange();
+  range.selectNodeContents(document.getElementById('outputTable'));
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+};
+</script>
+
+</body>
+</html>

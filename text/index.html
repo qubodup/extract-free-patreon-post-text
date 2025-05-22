@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Post Extractor</title>
+</head>
+<body>
+  <nav><a href="https://github.com/qubodup/extract-free-patreon-post-text">readme</a> | <a href="https://qubodup.github.io/extract-free-patreon-post-text/links/">link extractor</a> | <a href="https://qubodup.github.io/extract-free-patreon-post-text/text/">post extractor</a></nav>
+  <textarea id="inputText" rows="25" cols="100"></textarea><br>
+  <button id="extract" onclick="extractPosts()">Extract</button>
+  <button id="escapeCells">Escape Cells</button>
+  <button onclick="window.getSelection().selectAllChildren(document.getElementById('outputTable'));">Select</button>
+  <table border="1" id="outputTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Length</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+	// button stuff
+	document.getElementById('escapeCells').onclick = () => {
+	  const tds = document.querySelectorAll('#outputTable td');
+	  tds.forEach(td => {
+		const html = td.innerHTML.trim();
+
+		// Check if already wrapped
+		if (html.startsWith('="') && html.endsWith('"')) return;
+		if (html === '') return;
+
+		// Check if multiple lines (detect multiple <br> or newline chars)
+		const lineBreaks = html.match(/<br\s*\/?>|\n/g);
+		if (lineBreaks && lineBreaks.length > 0) return;
+
+		// Wrap with =" at start and " at end
+		td.innerHTML = `="${html}"`;
+	  });
+	};
+	
+	// button stuff over
+    function extractPosts() {
+      const input = document.getElementById('inputText').value;
+      const currentYear = new Date().getFullYear();
+      const lines = input.split('\n');
+
+      // Trim to only lines between "Search posts" and "See more posts"
+      const start = lines.findIndex(line => line.trim() === 'Search posts');
+      var end = lines.findIndex(line => line.trim() === 'See more posts');
+      if (end === -1) end = lines.length - 1;
+      if (start === -1 || end === -1 || start >= end) return;
+
+      const relevantLines = lines.slice(start + 1, end);
+
+      // Split into posts on "Share" line
+      const posts = [];
+      let currentPost = [];
+      for (let line of relevantLines) {
+        if (line.trim() === 'Share') {
+          if (currentPost.length > 0) {
+            posts.push(currentPost);
+            currentPost = [];
+          }
+        } else {
+          currentPost.push(line);
+        }
+      }
+      if (currentPost.length > 0) posts.push(currentPost);
+
+      const output = [];
+
+      for (const post of posts) {
+        let date = '';
+        let title = '';
+        let status = '';
+        let length = '';
+        let description = '';
+
+        // === Determine post type ===
+        let type = null;
+
+		var exists_jointounlock = false;
+        for (let i = 0; i < post.length - 1; i++) {
+          const line = post[i].trim();
+          const nextLine = post[i + 1].trim();
+          if (line === 'Preview' && /\d+:\d{2}$/.test(nextLine)) {
+            type = 'video';
+            break;
+          }
+          // Placeholder for detecting other types:
+          if (line === 'Change progress' && /\d+:\d{2}$/.test(nextLine)) {
+            type = 'pod_internal';
+            break;
+          }
+          if (line === 'Join to unlock') {
+            exists_jointounlock = true;
+          }
+        }
+		if (type === null && exists_jointounlock) {
+		  type = 'text'
+		} else if (type === null && !exists_jointounlock) {
+		  type = 'external';
+		}
+
+        // === Process post based on type ===
+        if (type === 'video') {
+          for (let i = 0; i < post.length; i++) {
+            const line = post[i].trim();
+
+            if (line === 'Locked') {
+              status = 'Locked';
+            }
+
+            if (line === 'Preview') {
+              length = post[i + 1]?.trim() || '';
+              title = post[i + 2]?.trim() || '';
+              i += 2; // Skip processed lines
+              continue;
+            }
+
+            if (line === 'New') {
+              const rawDate = post[i + 1]?.trim() || '';
+              if (!/\d{4}$/.test(rawDate)) {
+                date = `${rawDate}, ${currentYear}`;
+              } else {
+                date = rawDate;
+              }
+              i += 1;
+              continue;
+            }
+
+            if (date != '' && line === '') {
+              // After the first empty line post-date, start description
+              let descParts = [];
+              for (let j = i + 1; j < post.length; j++) {
+                const descLine = post[j].trim();
+                if (descLine === 'Join to unlock') break;
+                descParts.push(descLine);
+              }
+              description = descParts.join('<br>');
+              break;
+            }
+          }
+        }
+
+        // === Process post based on type ===
+        else if (type === 'pod_internal') {
+		  var title_scan = false; // special title scan section
+          for (let i = 0; i < post.length; i++) {
+            const line = post[i].trim();
+
+            if (line === 'Locked') {
+              status = 'Locked';
+            }
+
+            if (line === 'Change progress') {
+              length = post[i + 1]?.trim() || '';
+              i += 1;
+			  title_scan = true; // set title
+              continue;
+            }
+			
+			if (title_scan && (line != 'New') ) {
+			
+			  if (line != '') {
+				if (title === '') {
+				  title = line;
+				} else {
+				  title += ' - ' + line;
+				}
+			  }
+			
+			  continue
+			}
+
+            if (line === 'New') {
+			  title_scan = false;
+              const rawDate = post[i + 1]?.trim() || '';
+              if (!/\d{4}$/.test(rawDate)) {
+                date = `${rawDate}, ${currentYear}`;
+              } else {
+                date = rawDate;
+              }
+              i += 1;
+              continue;
+            }
+
+            if (date != '' && line === '') {
+              // After the first empty line post-date, start description
+              let descParts = [];
+              for (let j = i + 1; j < post.length; j++) {
+                const descLine = post[j].trim();
+                if (descLine === 'Join to unlock') break;
+                descParts.push(descLine);
+              }
+              description = descParts.join('<br>');
+              break;
+            }
+          }
+		  
+        // === Process post based on type ===
+        } else if (type === 'external') {
+		
+          for (let i = 0; i < post.length; i++) {
+            const line = post[i].trim();
+
+            if (line === 'Locked') {
+              status = 'Locked';
+            }
+			
+            if (line === 'New') {
+			  title = post[i -2]?.trim() || '';
+              const rawDate = post[i + 1]?.trim() || '';
+              if (!/\d{4}$/.test(rawDate)) {
+                date = `${rawDate}, ${currentYear}`;
+              } else {
+                date = rawDate;
+              }
+              i += 1;
+              continue;
+            }
+
+            if (date != '' && line != '' && line === 'View post') {
+              // After the first empty line post-date, start description
+              let descParts = [];
+              for (let j = i + 1; j < post.length; j++) {
+                const descLine = post[j].trim();
+				const tags = ['announcements', 'video', 'The Fog Campaign', 'mountain campaign', 'The Mountain Campaign', 'moon', 'season 5', 'season 4', 'season 3', 'season 2', 'season 1', 'Season 5', 'Season 4', 'Season 3', 'Season 2', 'Season 1', 'Danger Room', 'Tomb of Annihilation', 'Fungeon', 'Err:509'];
+                if (/^\d+$/.test(descLine) || tags.includes(descLine )) break;
+                descParts.push(descLine);
+              }
+              description = descParts.join('\n').trim().replaceAll('\n', '\n<br>');
+              break;
+            }
+          }
+		  
+        // === Process post based on type ===
+        } else if (type === 'text') {
+		
+          for (let i = 0; i < post.length; i++) {
+            const line = post[i].trim();
+
+            if (line === 'Locked') {
+              status = 'Locked';
+            }
+			
+            if (line === 'New') {
+			  title = post[i -2]?.trim() || '';
+              const rawDate = post[i + 1]?.trim() || '';
+              if (!/\d{4}$/.test(rawDate)) {
+                date = `${rawDate}, ${currentYear}`;
+              } else {
+                date = rawDate;
+              }
+              i += 1;
+              continue;
+            }
+
+            if (date != '' && line === '') {
+              // After the first empty line post-date, start description
+              let descParts = [];
+              for (let j = i + 1; j < post.length; j++) {
+                const descLine = post[j].trim();
+                if (descLine === 'Join to unlock') break;
+                descParts.push(descLine);
+              }
+              description = descParts.join('<br>');
+              break;
+            }
+          }
+          
+		  
+        } else {
+          // Fallback for unknown type: dump the whole post into description
+		  title = '[UNKNOWN TYPE]';
+          description = post.map(line => line.trim()).join('<br>');
+        }
+
+        output.push([date, title, status, length, description]);
+      }
+
+      // Render table
+      const tbody = document.getElementById('outputTable').querySelector('tbody');
+      tbody.innerHTML = '';
+      for (const row of output) {
+        const tr = document.createElement('tr');
+        for (const cellData of row) {
+          const td = document.createElement('td');
+          td.innerHTML = cellData;
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }
+  </script>
+</body>
+</html>
