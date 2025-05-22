@@ -1,0 +1,8 @@
+Write a javascript page that has a text area and a extract button
+Create an array 'links'
+When pressing extract, for each path trom the text box that starts with "href="/posts/" and ends with "
+- Turn paths like "/posts/episode-19-of-be-128885615" into "https://www.patreon.com/posts/episode-19-of-be-128885615" and then add to the array 'links'
+- Remove all duplicates from 'links', only keeping the first occurrence
+- Output the results in a table, without a header row
+- if the table is clicked, it should be selected for easy copy paste
+Just the code. No CSS.
