@@ -5,7 +5,7 @@ Extract Patreon text to put it on Fandom wikis, specific to Nerd Poker Podcast
 
 1. Go to the patreon, use the filter to pick 1 year and start scrolling until there's nothing left or you reach the last tracked post
 2. Open developer tools (F12), find the div that contains each post inside their own divs and copy it from the code view into the [post link extractor](https://qubodup.github.io/extract-free-patreon-post-text/links/)
-3. Paste the result onto A4 in Libreoffice (or maybe Google Sheets or Excel)
+3. Paste the result onto A4 in Libreoffice Calc (or maybe Google Sheets or Excel)
 4. Back to the patreon, now click drag from the bottom right to select the "Share" of the last post from the bottom, let go, scroll to the top, hold down SHIFT and click left above the filter to select all content. Scroll wildly up and down to make sure all posts are active. With >100 posts it seems their content is partially hidden? Wiggle up and down. (Or split the task into month ranges manually)
 5. Copy
 6. Paste into the [post text extractor](https://qubodup.github.io/extract-free-patreon-post-text/text/), click Extract, Escape Cells, Select, press CTRL+C
