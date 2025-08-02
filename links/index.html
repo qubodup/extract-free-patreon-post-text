@@ -49,5 +49,46 @@ document.getElementById('outputTable').onclick = () => {
 };
 </script>
 
+<hr>
+<h2>Version 2</h2>
+<p>Simpler, stupider, works August 2, 2025</p>
+
+<textarea id="inputV2" rows="10" cols="60"></textarea><br>
+<button id="extractBtnV2">Extract V2</button>
+<br><br>
+<table id="outputTableV2" border="1"></table>
+
+<script>
+document.getElementById('extractBtnV2').onclick = () => {
+  const linksV2 = new Set(); // using Set to prevent duplicates
+  const text = document.getElementById('inputV2').value;
+  const regex = /https:\/\/www\.patreon\.com\/posts\/([^\s"/]+)/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    linksV2.add(`https://www.patreon.com/posts/${match[1]}`);
+  }
+
+  const table = document.getElementById('outputTableV2');
+  table.innerHTML = '';
+  linksV2.forEach(link => {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.textContent = link;
+    tr.appendChild(td);
+    table.appendChild(tr);
+  });
+};
+
+// Select table content on click for easy copy/paste
+document.getElementById('outputTableV2').onclick = () => {
+  const range = document.createRange();
+  range.selectNodeContents(document.getElementById('outputTableV2'));
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+};
+</script>
+
+
 </body>
 </html>
